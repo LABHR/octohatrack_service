@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Union
 import time
 import os
 from flask import Flask, render_template, request
 from github import Github
+from github.GithubException import UnknownObjectException
 from google.cloud import bigquery
 from octohatrack.contributors_file import contributors_file as contrib_file
 from octohatrack.helpers import progress_message
@@ -26,13 +27,16 @@ def api_contributors(repos: str) -> List[str]:
 
     for repo in repo_split(repos):
         print(f"API: {repo}")
-        repo = Github().get_repo(repo)
+        try: 
+            repo = Github().get_repo(repo)
+        except UnknownObjectException:
+            return {"error": f"repo {repo} not found"}
         contribs += repo.get_contributors()
 
     return unique_sort([c.login for c in contribs])
 
 
-def pri_contributors(repos: str) -> List[str]:
+def pri_contributors(repos: str) -> Union[List[str], dict]:
     client = bigquery.Client()
 
     repo_list = ",".join([f'"{r}"' for r in repos.split(",")])
@@ -77,6 +81,8 @@ def main():
         return render_template("base.html")
 
     api = api_contributors(repos)
+    if type(api) == dict and "error" in api:
+        return render_template("base.html", error=f"Exception occured: {api['error']}")
     pri = pri_contributors(repos)
     fil = file_contributors(repos)
 

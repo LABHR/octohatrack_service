@@ -2,7 +2,9 @@
 <link rel="stylesheet" href="https://latex.now.sh/style.css">
 <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐙</text></svg>">
-
+<style>
+    .error { color: red; font-weight: bold}
+</style>
 <body>
 
     <h1>octohatrack, as a service</h1>
@@ -11,6 +13,9 @@
             onclick="location.href='?repos=' + document.getElementById('repos').value" id="go">Go</button>
     </p>
 
+    {% if error %}
+    <p><span class='error'>{{error}}</span></p>
+    {% endif %}
     {% if data %}
     <p>
     <h2>Let's look at {{data['nice_repos']}}</h2>
