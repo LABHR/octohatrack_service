@@ -2,3 +2,5 @@ octohatrack
 google-cloud-bigquery
 pygithub
 flask
+gunicorn
+requests<2.25
