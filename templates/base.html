@@ -1,0 +1,58 @@
+<title>octohatrack, as a service</title>
+<link rel="stylesheet" href="https://latex.now.sh/style.css">
+<link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐙</text></svg>">
+
+<body>
+
+    <h1>octohatrack, as a service</h1>
+
+    <p>Enter repos to search: <input id="repo" /> <button
+            onclick="location.href='?repo=' + document.getElementById('repo').value" id="go">GO</button>
+    </p>
+
+    {% if data %}
+    <p>
+    <h2>Let's look at {{data['nice_repos']}}</h2>
+    <hr>
+    <h3>GitHub says there are {{ data['api']|length}} contributors:</h3>
+    {% with list=data['api']%}{% include "linked_list.html" %}{% endwith %}
+
+    {% if data['new']|length == 0 %}
+    <h3>And we agree. We can't see any more than that.</h3>
+
+    {% else %}
+    <h3>We say, these {{data['new']|length}} people also helped:</h3>
+    {% with list=data['new']%}{% include "linked_list.html" %}{% endwith %}
+
+    {% if data['fil']|length > 0 %}
+    <h3>And these {{data['fil']|length}} people are thanked for their help:</h3>
+    {% with list=data['fil']%}{% include "linked_list.html" %}{% endwith %}
+
+    {% endif %}
+
+    <h3>For a total of {{data['contribs']|length}} contributors, {{data['delta']}} more than GitHub says.</h3>
+    <small>Total processing time: {{data['time']}}</small>
+    {% endif %}
+    </p>
+    {% endif %}
+    <hr>
+    <p><b>Data sources</b>
+        <li>GitHub Contributors: from the GitHub API, via <a
+                href="https://pygithub.readthedocs.io/en/latest/github_objects/Repository.html?highlight=contributors#github.Repository.Repository.get_contributors">pygithub</a>.
+        </li>
+        <li>Additional contributors: any new username identified in all events from all time for the repo, via <a
+                href="https://www.gharchive.org/#bigquery">GHArchive's BigQuery dataset</a>. Note:
+            <ul>
+                <li>Usernames may not exist, as they have since been renamed.</li>
+                <li>If your repo name changed over time, append the old names in the search box, comma separated.
+                    (example: "LABHR/octohatrack, glasnt/hatrack")</li>
+            </ul>
+        </li>
+        <li>If found, any people named in a CONTRIBTORS file within the repo <a
+                href="https://github.com/LABHR/octohatrack/blob/latest/CONTRIBUTORS">(example)</a>.</li>
+    </p>
+
+    <hr>
+    <p>An <a href="http://labhr.github.io/">LABHR</a> project.</p>
+</body>

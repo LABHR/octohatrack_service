@@ -1,0 +1,9 @@
+{% for c in list %}
+<li>{% set s = c.split(" ") %}
+    {% if s[-1] == "twitter" %}
+    <a href="https://twitter.com/{{s[0]}}">{{s[0]}}</a>
+    {% else %}
+    <a href="https://github.com/{{c}}">{{c}}</a>
+    {% endif %}
+</li>
+{% endfor %}
