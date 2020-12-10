@@ -1,6 +1,7 @@
-from typing import List, Union
-import time
 import os
+import time
+from typing import List, Union
+
 from flask import Flask, render_template, request
 from github import Github
 from github.GithubException import UnknownObjectException
@@ -27,10 +28,11 @@ def api_contributors(repos: str) -> List[str]:
 
     for repo in repo_split(repos):
         print(f"API: {repo}")
-        try: 
+        try:
             repo = Github().get_repo(repo)
         except UnknownObjectException:
             return {"error": f"repo {repo} not found"}
+
         contribs += repo.get_contributors()
 
     return unique_sort([c.login for c in contribs])
@@ -83,6 +85,7 @@ def main():
     api = api_contributors(repos)
     if type(api) == dict and "error" in api:
         return render_template("base.html", error=f"Exception occured: {api['error']}")
+
     pri = pri_contributors(repos)
     fil = file_contributors(repos)
 
