@@ -16,14 +16,17 @@ YEARMONTH = "*"
 
 
 def repo_split(repos):
+    """From an input-populated querystring, split the result into a usable list"""
     return [x.strip() for x in repos.split(",")]
 
 
 def unique_sort(users):
+    """Sort case-insenstive"""
     return sorted(list(set(users)), key=str.casefold)
 
 
 def api_contributors(repos: str) -> List[str]:
+    """Get 'the' contributors"""
     contribs = []
 
     for repo in repo_split(repos):
@@ -38,24 +41,45 @@ def api_contributors(repos: str) -> List[str]:
     return unique_sort([c.login for c in contribs])
 
 
-def pri_contributors(repos: str) -> Union[List[str], dict]:
+def pri_contributors(repos: str) -> List[str]:
+    """Get all events associated to contribution.
+    
+    Notes: 
+    * MemberEvent is adding collaborators, which is evidence of contribution, potentially outside repo.
+    * JSON_EXTRACT is expensive, full table scan. 
+    * Watching or Forking a repo isn't contributing.
+    """
     client = bigquery.Client()
 
     repo_list = ",".join([f'"{r}"' for r in repos.split(",")])
 
     query = f"""
+    SELECT 
+        login
+    FROM (
         SELECT
-            actor.login
+            JSON_EXTRACT_SCALAR(payload, '$.member.login') AS login
         FROM
             `githubarchive.month.{YEARMONTH}`
-        WHERE repo.name in ({repo_list})
-          AND type NOT IN ("WatchEvent", "ForkEvent")
-        GROUP BY 
-            actor.login
-        ORDER BY
-            LOWER(actor.login) ASC
+        WHERE
+            {repo_search}
+            AND type = "MemberEvent" 
+        GROUP BY
+            login
+        UNION ALL
+        SELECT
+            actor.login AS login
+        FROM
+            `githubarchive.month.{YEARMONTH}`
+        WHERE
+            {repo_search}
+            AND type NOT IN ("WatchEvent", "ForkEvent", "MemberEvent")
+        GROUP BY
+            login )
+    ORDER BY
+    LOWER(login) ASC
     """
-    print(f"PRI: {repo_list}")
+    print(f"PRI: {repo_list}, {YEARMONTH}")
     query_job = client.query(query)  # Make an API request.
 
     contribs = []
