@@ -51,7 +51,7 @@ def pri_contributors(repos: str) -> List[str]:
     """
     client = bigquery.Client()
 
-    repo_list = ",".join([f'"{r}"' for r in repos.split(",")])
+    repo_list = ",".join([f'"{r}"' for r in repo_split(repos)])
 
     query = f"""
     SELECT 
@@ -62,7 +62,7 @@ def pri_contributors(repos: str) -> List[str]:
         FROM
             `githubarchive.month.{YEARMONTH}`
         WHERE
-            {repo_search}
+            repo.name in ({repo_list})
             AND type = "MemberEvent" 
         GROUP BY
             login
@@ -72,7 +72,7 @@ def pri_contributors(repos: str) -> List[str]:
         FROM
             `githubarchive.month.{YEARMONTH}`
         WHERE
-            {repo_search}
+            repo.name in ({repo_list})
             AND type NOT IN ("WatchEvent", "ForkEvent", "MemberEvent")
         GROUP BY
             login )
@@ -80,6 +80,7 @@ def pri_contributors(repos: str) -> List[str]:
     LOWER(login) ASC
     """
     print(f"PRI: {repo_list}, {YEARMONTH}")
+    print(query)
     query_job = client.query(query)  # Make an API request.
 
     contribs = []
