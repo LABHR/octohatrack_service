@@ -21,7 +21,6 @@ else:
     app.logger.warning("No GITHUB_TOKEN specified. Service may encounter rate limits. ")
 
 
-
 def repo_split(repos):
     """From an input-populated querystring, split the result into a usable list"""
     return [x.strip() for x in repos.split(",")]
@@ -126,7 +125,6 @@ def main():
 
     pri = pri_contributors(repos)
     fil = file_contributors(repos)
-
 
     if request.args.get("raw"):
         app.logger.info("Returning raw data to user")
