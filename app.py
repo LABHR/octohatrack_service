@@ -122,9 +122,9 @@ def main():
 
 
     if request.args.get("raw"):
+        print("Returning raw data to user")
         contribs = api + pri + fil
         data = "\n".join([",".join(c) for c in contribs])
-        breakpoint()
         response = make_response(data, 200)
         response.mimetype = "text/plain"
         return response
