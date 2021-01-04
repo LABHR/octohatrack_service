@@ -2,7 +2,7 @@ import os
 import time
 from typing import List, Union
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response
 from github import Github
 from github.GithubException import UnknownObjectException
 from google.cloud import bigquery
@@ -32,13 +32,15 @@ def api_contributors(repos: str) -> List[str]:
     for repo in repo_split(repos):
         print(f"API: {repo}")
         try:
-            repo = Github().get_repo(repo)
+            repo_obj = Github().get_repo(repo)
         except UnknownObjectException:
             return {"error": f"repo {repo} not found"}
 
-        contribs += repo.get_contributors()
-
-    return unique_sort([c.login for c in contribs])
+        contr = repo_obj.get_contributors()
+        uniq = unique_sort([c.login for c in contr])
+        for c in uniq:
+            contribs.append([repo, "api_contributor", c])
+    return contribs
 
 
 def pri_contributors(repos: str) -> List[str]:
@@ -55,29 +57,30 @@ def pri_contributors(repos: str) -> List[str]:
 
     query = f"""
     SELECT 
-        login
+        repo, type, login
     FROM (
         SELECT
-            JSON_EXTRACT_SCALAR(payload, '$.member.login') AS login
+            repo.name as repo, type as type, JSON_EXTRACT_SCALAR(payload, '$.member.login') AS login
         FROM
             `githubarchive.month.{YEARMONTH}`
         WHERE
             repo.name in ({repo_list})
             AND type = "MemberEvent" 
         GROUP BY
-            login
+            repo, type, login
         UNION ALL
         SELECT
-            actor.login AS login
+            repo.name as repo, type as type, actor.login AS login
         FROM
             `githubarchive.month.{YEARMONTH}`
         WHERE
             repo.name in ({repo_list})
             AND type NOT IN ("WatchEvent", "ForkEvent", "MemberEvent")
         GROUP BY
-            login )
+            repo, type, login
+    )
     ORDER BY
-    LOWER(login) ASC
+    repo, type, LOWER(login) ASC
     """
     print(f"PRI: {repo_list}, {YEARMONTH}")
     print(query)
@@ -85,7 +88,7 @@ def pri_contributors(repos: str) -> List[str]:
 
     contribs = []
     for row in query_job:
-        contribs.append(row[0])
+        contribs.append([row[0], row[1], row[2]])
 
     return contribs
 
@@ -94,8 +97,11 @@ def file_contributors(repos: str) -> List[str]:
     contribs = []
     for repo in repo_split(repos):
         print(f"FIL: {repo}")
-        contribs += [c["user_name"] for c in contrib_file(repo)]
-    return unique_sort(contribs)
+        contr = [c["user_name"] for c in contrib_file(repo)]
+        uniq = unique_sort(contr)
+        for c in uniq:
+            contribs.append([repo, "file_contributor", c])
+    return contribs
 
 
 @app.route("/")
@@ -113,6 +119,20 @@ def main():
 
     pri = pri_contributors(repos)
     fil = file_contributors(repos)
+
+
+    if request.args.get("raw"):
+        contribs = api + pri + fil
+        data = "\n".join([",".join(c) for c in contribs])
+        breakpoint()
+        response = make_response(data, 200)
+        response.mimetype = "text/plain"
+        return response
+
+    # Reduce down to just list of contributors
+    api = unique_sort([c[-1] for c in api])
+    pri = unique_sort([c[-1] for c in pri])
+    fil = unique_sort([c[-1] for c in fil])
 
     contribs = sorted(list(set(api + pri + fil)), key=str.casefold)
 

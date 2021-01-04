@@ -15,6 +15,16 @@ The minimum permissions this service requires:
 
 Create a service account with these roles, and associate to the service, for limited permissions.
 
+## Raw Data
+
+Add `?raw=true` to the URL to return the raw data from the result.
+
+## Limitations
+
+If your repo has been renamed, provide both the new and old names. The new name will not appear in pre-rename gharchive data. Note that some duplication may occur in api/file records when using `raw`. 
+
+
+
 ## Development and testing
 
 For continuous deployment, [deploy the service with Cloud Buildpacks](https://cloud.google.com/run/docs/continuous-deployment-with-cloud-build).
