@@ -30,7 +30,7 @@ def api_contributors(repos: str) -> List[str]:
     contribs = []
 
     for repo in repo_split(repos):
-        print(f"API: {repo}")
+        app.logger.info(f"API: {repo}")
         try:
             repo_obj = Github().get_repo(repo)
         except UnknownObjectException:
@@ -82,8 +82,8 @@ def pri_contributors(repos: str) -> List[str]:
     ORDER BY
     repo, type, LOWER(login) ASC
     """
-    print(f"PRI: {repo_list}, {YEARMONTH}")
-    print(query)
+    app.logger.info(f"PRI: {repo_list}, {YEARMONTH}")
+    app.logger.info(query)
     query_job = client.query(query)  # Make an API request.
 
     contribs = []
@@ -96,7 +96,7 @@ def pri_contributors(repos: str) -> List[str]:
 def file_contributors(repos: str) -> List[str]:
     contribs = []
     for repo in repo_split(repos):
-        print(f"FIL: {repo}")
+        app.logger.info(f"FIL: {repo}")
         contr = [c["user_name"] for c in contrib_file(repo)]
         uniq = unique_sort(contr)
         for c in uniq:
@@ -122,7 +122,7 @@ def main():
 
 
     if request.args.get("raw"):
-        print("Returning raw data to user")
+        app.logger.info("Returning raw data to user")
         contribs = api + pri + fil
         data = "\n".join([",".join(c) for c in contribs])
         response = make_response(data, 200)

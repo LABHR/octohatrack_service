@@ -4,3 +4,5 @@ pygithub
 flask
 gunicorn
 requests<2.25
+
+click
