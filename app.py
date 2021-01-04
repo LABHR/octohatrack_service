@@ -14,6 +14,13 @@ app = Flask(__name__)
 # "*" for all, or use a YYYYMM format for limited results (e.g. 201810)
 YEARMONTH = "*"
 
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", None)
+if GITHUB_TOKEN:
+    app.logger.info("Service started with a valid GITHUB_TOKEN")
+else:
+    app.logger.warning("No GITHUB_TOKEN specified. Service may encounter rate limits. ")
+
+
 
 def repo_split(repos):
     """From an input-populated querystring, split the result into a usable list"""
@@ -32,7 +39,7 @@ def api_contributors(repos: str) -> List[str]:
     for repo in repo_split(repos):
         app.logger.info(f"API: {repo}")
         try:
-            repo_obj = Github().get_repo(repo)
+            repo_obj = Github(GITHUB_TOKEN).get_repo(repo)
         except UnknownObjectException:
             return {"error": f"repo {repo} not found"}
 
