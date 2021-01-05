@@ -62,11 +62,16 @@ def pri_contributors(repos: str) -> List[str]:
     repo_list = ",".join([f'"{r}"' for r in repo_split(repos)])
 
     query = f"""
-    SELECT 
+    SELECT
         repo, type, login
     FROM (
         SELECT
-            repo.name as repo, type as type, JSON_EXTRACT_SCALAR(payload, '$.member.login') AS login
+            repo.name AS repo,
+            type AS type,
+            COALESCE(
+                JSON_EXTRACT_SCALAR(payload, '$.member.login'),
+                JSON_EXTRACT_SCALAR(payload, '$.member')
+            ) AS login
         FROM
             `githubarchive.month.{YEARMONTH}`
         WHERE
