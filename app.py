@@ -40,7 +40,9 @@ def api_contributors(repos: str) -> List[str]:
         try:
             repo_obj = Github(GITHUB_TOKEN).get_repo(repo)
         except UnknownObjectException:
-            return {"error": f"repo {repo} not found"}
+            if len(repo_split(repos)) == 1:
+                return {"error": f"repo {repo} not found"}
+            continue
 
         contr = repo_obj.get_contributors()
         uniq = unique_sort([c.login for c in contr])
