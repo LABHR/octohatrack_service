@@ -1,7 +1,7 @@
 # A shorter CLI for quick searching
 # Pulls API data one at a time
 # Pulls BigQuery data in bulk
-# Ignores file data (saves time for a file that probably doesn't exist) 
+# Ignores file data (saves time for a file that probably doesn't exist)
 
 import logging
 import click
